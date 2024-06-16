@@ -13,23 +13,34 @@ import (
 )
 
 func main() {
+	// コマンドライン引数をパース
 	flag.Parse()
-	s := time.Now()
-	copyDirSyncPall(filepath.Clean(flag.Arg(0)), filepath.Clean(flag.Arg(1)))
-	fmt.Printf("process time: %s\n", time.Since(s))
+	// プロセス開始時間を記録
+	start := time.Now()
+	// ディレクトリのコピーを開始
+	if err := copyDirSyncPall(filepath.Clean(flag.Arg(0)), filepath.Clean(flag.Arg(1))); err != nil {
+		fmt.Println("Error:", err)
+	}
+	// 経過時間を表示
+	fmt.Printf("Process time: %s\n", time.Since(start))
 }
 
+// ディレクトリを同期的かつ並行にコピーする
 func copyDirSyncPall(srcDir, dstDir string) error {
+	// パスを標準化
 	srcDir = filepath.ToSlash(srcDir)
-	task := []string{}
+	var tasks []string
+
+	// コピー元ディレクトリを再帰的に探索し、全ファイルパスを取得
 	err := filepath.Walk(srcDir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
+		// ディレクトリはスキップ
 		if info.IsDir() {
 			return nil
 		}
-		task = append(task, path)
+		tasks = append(tasks, path)
 		return nil
 	})
 
@@ -37,39 +48,49 @@ func copyDirSyncPall(srcDir, dstDir string) error {
 		return err
 	}
 
+	// 同期処理のためのWaitGroupを設定
 	var wg sync.WaitGroup
-	wg.Add(len(task))
-	for _, v := range task {
-		v = filepath.ToSlash(v)
-		dstFile := filepath.Join(dstDir, strings.Replace(v, srcDir, "", 1))
-		srcAbsFile, _ := filepath.Abs(v)
+	wg.Add(len(tasks))
+
+	// 各ファイルを並行でコピー
+	for _, task := range tasks {
+		task = filepath.ToSlash(task)
+		// コピー先のファイルパスを設定
+		dstFile := filepath.Join(dstDir, strings.Replace(task, srcDir, "", 1))
+		srcAbsFile, _ := filepath.Abs(task)
 		fmt.Println("Copying...", srcAbsFile)
-		go func(s, d string) {
-			err := copyFileWithTimeStamp(s, d)
-			if err != nil {
+		go func(src, dst string) {
+			if err := copyFileWithTimeStamp(src, dst); err != nil {
 				fmt.Println(err)
 			}
 			wg.Done()
 		}(srcAbsFile, dstFile)
 	}
+	// すべてのコピーが完了するまで待機
 	wg.Wait()
 	return nil
 }
 
+// ファイルをコピーし、タイムスタンプを維持する
 func copyFileWithTimeStamp(srcFile, dstFile string) error {
-	// 作成日時データ読み取り
+	// 元ファイルの情報を取得
 	srcStat, err := os.Stat(srcFile)
-	// ファイルを読み取る
+	if err != nil {
+		return err
+	}
+
+	// 元ファイルを開く
 	src, err := os.Open(srcFile)
 	if err != nil {
 		return err
 	}
 	defer src.Close()
-	// コピー先ディレクトリを作成
-	err = os.MkdirAll(filepath.Dir(dstFile), 0755)
-	if err != nil {
 
+	// コピー先ディレクトリを作成
+	if err := os.MkdirAll(filepath.Dir(dstFile), 0755); err != nil {
+		return err
 	}
+
 	// コピー先ファイルを作成
 	dst, err := os.Create(dstFile)
 	if err != nil {
@@ -77,14 +98,13 @@ func copyFileWithTimeStamp(srcFile, dstFile string) error {
 	}
 	defer dst.Close()
 
-	// ファイル中身を同期する
-	_, err = io.Copy(dst, src)
-	if err != nil {
+	// ファイル内容をコピー
+	if _, err := io.Copy(dst, src); err != nil {
 		return err
 	}
-	// 作成日時などを書き換える
-	err = os.Chtimes(dstFile, srcStat.ModTime(), srcStat.ModTime())
-	if err != nil {
+
+	// コピー先ファイルのタイムスタンプを元ファイルと同じに設定
+	if err := os.Chtimes(dstFile, srcStat.ModTime(), srcStat.ModTime()); err != nil {
 		return err
 	}
 	return nil
