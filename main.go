@@ -12,9 +12,10 @@ import (
 	"time"
 )
 
-const concurrency = 3
+var concurrency int
 
 func main() {
+	flag.IntVar(&concurrency, "n", 100, "concurrency number")
 	// コマンドライン引数をパース
 	flag.Parse()
 	// プロセス開始時間を記録
