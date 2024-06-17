@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+const concurrency = 3
+
 func main() {
 	// コマンドライン引数をパース
 	flag.Parse()
@@ -51,9 +53,12 @@ func copyDirSyncPall(srcDir, dstDir string) error {
 	// 同期処理のためのWaitGroupを設定
 	var wg sync.WaitGroup
 	wg.Add(len(tasks))
+	// 同時実行制御用チャネル
+	sem := make(chan struct{}, concurrency)
 
 	// 各ファイルを並行でコピー
 	for _, task := range tasks {
+		sem <- struct{}{}
 		task = filepath.ToSlash(task)
 		// コピー先のファイルパスを設定
 		dstFile := filepath.Join(dstDir, strings.Replace(task, srcDir, "", 1))
@@ -64,6 +69,7 @@ func copyDirSyncPall(srcDir, dstDir string) error {
 				fmt.Println(err)
 			}
 			wg.Done()
+			<-sem
 		}(srcAbsFile, dstFile)
 	}
 	// すべてのコピーが完了するまで待機
