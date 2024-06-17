@@ -29,3 +29,18 @@ GOOS=windows   GOARCH=amd64 go build -o ./dist/windows/amd64/
 7z a -mx=5 ./dist/openbsd.7z ./dist/openbsd/
 7z a -mx=5 ./dist/windows.zip ./dist/windows/
 7z a -mx=5 ./dist/windows.7z ./dist/windows/
+
+rm checksum.txt
+touch checksum.txt
+sha256sum ./dist/darwin.zip  >> checksum.txt 
+sha256sum ./dist/darwin.7z   >> checksum.txt 
+sha256sum ./dist/freebsd.zip >> checksum.txt 
+sha256sum ./dist/freebsd.7z  >> checksum.txt 
+sha256sum ./dist/linux.zip   >> checksum.txt 
+sha256sum ./dist/linux.7z    >> checksum.txt 
+sha256sum ./dist/netbsd.zip  >> checksum.txt 
+sha256sum ./dist/netbsd.7z   >> checksum.txt 
+sha256sum ./dist/openbsd.zip >> checksum.txt 
+sha256sum ./dist/openbsd.7z  >> checksum.txt 
+sha256sum ./dist/windows.zip >> checksum.txt 
+sha256sum ./dist/windows.7z  >> checksum.txt 
