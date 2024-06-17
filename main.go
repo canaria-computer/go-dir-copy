@@ -12,16 +12,19 @@ import (
 	"time"
 )
 
-var concurrency int
-
 func main() {
-	flag.IntVar(&concurrency, "n", 100, "concurrency number")
+	concurrency := flag.Int("n", 100, "concurrency number")
 	// コマンドライン引数をパース
 	flag.Parse()
+	// 引数の数を確認
+	if flag.NArg() != 2 {
+		fmt.Println("Usage: copydir <source> <destination>")
+		return
+	}
 	// プロセス開始時間を記録
 	start := time.Now()
 	// ディレクトリのコピーを開始
-	if err := copyDirSyncPall(filepath.Clean(flag.Arg(0)), filepath.Clean(flag.Arg(1))); err != nil {
+	if err := copyDirSyncPall(filepath.Clean(flag.Arg(0)), filepath.Clean(flag.Arg(1)), *concurrency); err != nil {
 		fmt.Println("Error:", err)
 	}
 	// 経過時間を表示
@@ -29,7 +32,7 @@ func main() {
 }
 
 // ディレクトリを同期的かつ並行にコピーする
-func copyDirSyncPall(srcDir, dstDir string) error {
+func copyDirSyncPall(srcDir, dstDir string, concurrency int) error {
 	// パスを標準化
 	srcDir = filepath.ToSlash(srcDir)
 	var tasks []string
@@ -63,14 +66,22 @@ func copyDirSyncPall(srcDir, dstDir string) error {
 		task = filepath.ToSlash(task)
 		// コピー先のファイルパスを設定
 		dstFile := filepath.Join(dstDir, strings.Replace(task, srcDir, "", 1))
-		srcAbsFile, _ := filepath.Abs(task)
+		srcAbsFile, err := filepath.Abs(task)
+		if err != nil {
+			fmt.Println("Error getting absolute path:", err)
+			wg.Done()
+			<-sem
+			continue
+		}
 		fmt.Println("Copying...", srcAbsFile)
 		go func(src, dst string) {
+			defer func() {
+				wg.Done()
+				<-sem
+			}()
 			if err := copyFileWithTimeStamp(src, dst); err != nil {
 				fmt.Println(err)
 			}
-			wg.Done()
-			<-sem
 		}(srcAbsFile, dstFile)
 	}
 	// すべてのコピーが完了するまで待機
