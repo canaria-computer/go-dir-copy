@@ -1,21 +1,21 @@
 mv dist dist_old
 rm dist_old
 
-GOOS=darwin    GOARCH=386   go build -o ./dist/darwin/386/
-GOOS=darwin    GOARCH=amd64 go build -o ./dist/darwin/amd64/
-GOOS=freebsd   GOARCH=386   go build -o ./dist/freebsd/386/
-GOOS=freebsd   GOARCH=amd64 go build -o ./dist/freebsd/amd64/
-GOOS=freebsd   GOARCH=arm   go build -o ./dist/freebsd/arm/
-GOOS=linux     GOARCH=386   go build -o ./dist/linux/386/
-GOOS=linux     GOARCH=amd64 go build -o ./dist/linux/amd64/
-GOOS=linux     GOARCH=arm   go build -o ./dist/linux/arm/
-GOOS=netbsd    GOARCH=386   go build -o ./dist/netbsd/386/
-GOOS=netbsd    GOARCH=amd64 go build -o ./dist/netbsd/amd64/
-GOOS=netbsd    GOARCH=arm   go build -o ./dist/netbsd/arm/
-GOOS=openbsd   GOARCH=386   go build -o ./dist/openbsd/386/
-GOOS=openbsd   GOARCH=amd64 go build -o ./dist/openbsd/amd64/
-GOOS=windows   GOARCH=386   go build -o ./dist/windows/386/
-GOOS=windows   GOARCH=amd64 go build -o ./dist/windows/amd64/
+GOOS=darwin    GOARCH=386   go build -tags production -ldflags "-s -w" -o ./dist/darwin/386/
+GOOS=darwin    GOARCH=amd64 go build -tags production -ldflags "-s -w" -o ./dist/darwin/amd64/
+GOOS=freebsd   GOARCH=386   go build -tags production -ldflags "-s -w" -o ./dist/freebsd/386/
+GOOS=freebsd   GOARCH=amd64 go build -tags production -ldflags "-s -w" -o ./dist/freebsd/amd64/
+GOOS=freebsd   GOARCH=arm   go build -tags production -ldflags "-s -w" -o ./dist/freebsd/arm/
+GOOS=linux     GOARCH=386   go build -tags production -ldflags "-s -w" -o ./dist/linux/386/
+GOOS=linux     GOARCH=amd64 go build -tags production -ldflags "-s -w" -o ./dist/linux/amd64/
+GOOS=linux     GOARCH=arm   go build -tags production -ldflags "-s -w" -o ./dist/linux/arm/
+GOOS=netbsd    GOARCH=386   go build -tags production -ldflags "-s -w" -o ./dist/netbsd/386/
+GOOS=netbsd    GOARCH=amd64 go build -tags production -ldflags "-s -w" -o ./dist/netbsd/amd64/
+GOOS=netbsd    GOARCH=arm   go build -tags production -ldflags "-s -w" -o ./dist/netbsd/arm/
+GOOS=openbsd   GOARCH=386   go build -tags production -ldflags "-s -w" -o ./dist/openbsd/386/
+GOOS=openbsd   GOARCH=amd64 go build -tags production -ldflags "-s -w" -o ./dist/openbsd/amd64/
+GOOS=windows   GOARCH=386   go build -tags production -ldflags "-s -w" -o ./dist/windows/386/
+GOOS=windows   GOARCH=amd64 go build -tags production -ldflags "-s -w" -o ./dist/windows/amd64/
 
 7z a -mx=5 ./dist/darwin.zip ./dist/darwin/
 7z a -mx=5 ./dist/darwin.7z ./dist/darwin/
